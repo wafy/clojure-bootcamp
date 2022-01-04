@@ -79,49 +79,55 @@
     )
   )
 
+;Ilet 대신 함수 단위로 리팩토링을 해야한다.
+
+(defn guard-log->log-list [one-line-log]
+  (str/split-lines (str/replace one-line-log #"\d\d Guard" "\n")) ;교대근무시간(00) Guard를 제거
+  )
+
+(defn guard-data->sleep-data
+  [{guard-id :guard-id, sleep-data :sleep-wake-list}] ;가드아이디별 잠든 시간 계산
+  {:guard-id   guard-id
+   :during-sum (->> sleep-data
+                    (map :during)
+                    (apply +))
+   })
+
+(defn guard-sleep-sum
+  [[key value-list]] ;가드아이디별 총 잠잔시간
+  {:guard-id    key
+   :total-sleep (->> value-list
+                     (map :during-sum)
+                     (apply +))
+   })
+
+(defn guard-frequent-minute
+    [guard-data-list best-sleep-guard]
+  (->> guard-data-list
+       (filter #(= (:guard-id best-sleep-guard)
+                   (:guard-id %)))
+       (map (fn [{sleep-list :sleep-wake-list}]
+              (->> sleep-list
+                   (map (fn [{sl :sleep wa :wake}]
+                          (range sl wa)))
+                   (reduce into []))))
+       (reduce into []) ;백터로 합쳐 반환 --vector 함수 활용하는 방법이 있는듯하다.
+       frequencies ;요소의 카운트 반환
+       (sort-by val >) ;내림차순 정렬
+       first ;[41 14] 첫번째 요소
+       first))
+
 (defn solve1
   [input-strings]
   (let [
         log-on-row (log->one-row input-strings)
-        guard별-로그-list (str/split-lines (str/replace log-on-row #"\d\d Guard" "\n")) ;교대근무시간(00) Guard를 제거
+        guard별-로그-list (guard-log->log-list log-on-row)
         guard-data-list (map log->guard-sleep-data guard별-로그-list )
-        sleep-during-list (map (fn [{guard-id :guard-id, sleep-data :sleep-wake-list}] ;가드아이디별 잠든 시간 계산
-                                 {:guard-id   guard-id
-                                  :during-sum (->> sleep-data
-                                                   (map :during)
-                                                   (apply +))
-                                  }
-                                 ) guard-data-list)
+        sleep-during-list (map guard-data->sleep-data guard-data-list)
         guard-sleep-group (group-by :guard-id sleep-during-list) ; 가드아이디별 group 화
-        sleep-sum (map (fn [[key value-list]] ;가드아이디별 총 잠잔시간
-                         {
-                          :guard-id    key
-                          :total-sleep (->> value-list
-                                            (map :during-sum)
-                                            (apply +))
-                          }
-                         )
-                       guard-sleep-group
-                       )
-        best-sleep-guard (last (sort-by :total-sleep < sleep-sum)) ; 가장많이 잔 가드 추출
-        frequent-minute (->> guard-data-list
-                             (filter #(= (:guard-id best-sleep-guard)
-                                         (:guard-id %)))
-                             (map (fn [{sleep-list :sleep-wake-list}]
-                                    (->> sleep-list
-                                         (map (fn [{sl :sleep wa :wake}]
-                                                (range sl wa)
-                                                ))
-                                         (reduce into [])
-                                         )
-                                    ))
-                             (reduce into []) ;백터로 합쳐 반환
-                             frequencies ;요소의 카운트 반환
-                             (sort-by val >) ;내림차순 정렬
-                             first ;41 14 첫번째 요소
-                             first ;41 첫번째 요소
-                             )
-        ]
+        sleep-sum (map guard-sleep-sum guard-sleep-group)
+        best-sleep-guard (last (sort-by :total-sleep < sleep-sum)) ; 가장많이 잔 가드 추출 max-key 함수로 대체가능
+        frequent-minute guard-frequent-minute]
     frequent-minute
     {
      :guard-id (:guard-id best-sleep-guard)
@@ -130,6 +136,5 @@
      }
     )
   )
-
 
 (solve1 input-strings)
