@@ -40,10 +40,7 @@
         (recur (rest target-list) (pop result-list))
 
         :else
-        (recur (rest target-list) (conj result-list target-alphabet)))
-      )
-    )
-  )
+        (recur (rest target-list) (conj result-list target-alphabet))))))
 
 (defn solve
   [input-string]
