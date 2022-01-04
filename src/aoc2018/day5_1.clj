@@ -25,28 +25,30 @@
          Math/abs
          (= 32))))
 
+(defn string->search-list
+  [input-string]
+  (loop [target-list (seq input-string)
+         result-list []]
 
-(defn string->reatec-list [input-string]
-  (loop [queue (seq input-string)
-         stack []
-         ]
-    (let [집어넣을-알파벳 (first queue)
-          스택-최상단-알파벳 (last stack)]
+    (let [target-alphabet (first target-list)
+          result-top-alphabet (last result-list)]
       (cond
-        (empty? queue)
-        stack
+        (empty? target-list)
+        result-list
 
-        (pair-alphabet? 집어넣을-알파벳 스택-최상단-알파벳)
-        (recur (rest queue) (pop stack))
+        (pair-alphabet? target-alphabet result-top-alphabet)
+        (recur (rest target-list) (pop result-list))
 
         :else
-        (recur (rest queue) (conj stack 집어넣을-알파벳)))
+        (recur (rest target-list) (conj result-list target-alphabet)))
       )
     )
   )
 
-(defn solve [input-string]
-  (count (string->reatec-list input-string))
-  )
+(defn solve
+  [input-string]
+  (count (string->search-list input-string)))
 
-(solve input-string)
+(comment
+  ;11754
+  (solve input-string))
