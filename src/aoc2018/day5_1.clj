@@ -25,26 +25,26 @@
          Math/abs
          (= 32))))
 
-(defn string->search-list
+; -> 자료형이 바뀔때 관용적으로 쓰는 표현이므로 함수명 변경필요  데이타가 변경되지 않았으므로 굳이 -> 필요없음. o
+; 작명할때 헷갈리면 문제의 영어 단어를 그대로 사용해서 함수명을 사용하라 ( 추천 react) o
+; loop를 사용하지 않고 다른 함수를 사용해서 리팩토링 필요  -> 다른분들의 코드도 보면서 참고 필요
+; 함수에 함수 호출은 가급적 한줄로 작성하라
+(defn react
   [input-string]
   (loop [target-list (seq input-string)
          result-list []]
 
     (let [target-alphabet (first target-list)
-          result-top-alphabet (last result-list)]
+          result-top-alphabet (peek result-list)]
       (cond
-        (empty? target-list)
-        result-list
-
+        (empty? target-list) result-list
         (pair-alphabet? target-alphabet result-top-alphabet)
         (recur (rest target-list) (pop result-list))
-
-        :else
-        (recur (rest target-list) (conj result-list target-alphabet))))))
+        :else (recur (rest target-list) (conj result-list target-alphabet))))))
 
 (defn solve
   [input-string]
-  (count (string->search-list input-string)))
+  (count (react input-string)))
 
 (comment
   ;11754
