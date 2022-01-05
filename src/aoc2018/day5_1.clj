@@ -29,22 +29,19 @@
 ; 작명할때 헷갈리면 문제의 영어 단어를 그대로 사용해서 함수명을 사용하라 ( 추천 react) o
 ; loop를 사용하지 않고 다른 함수를 사용해서 리팩토링 필요  -> 다른분들의 코드도 보면서 참고 필요
 ; 함수에 함수 호출은 가급적 한줄로 작성하라
-(defn react
-  [input-string]
-  (loop [target-list (seq input-string)
-         result-list []]
 
-    (let [target-alphabet (first target-list)
-          result-top-alphabet (peek result-list)]
-      (cond
-        (empty? target-list) result-list
-        (pair-alphabet? target-alphabet result-top-alphabet)
-        (recur (rest target-list) (pop result-list))
-        :else (recur (rest target-list) (conj result-list target-alphabet))))))
+(defn react_polymer [stack polymer]
+  (if (empty? polymer) stack
+    (let [p (first polymer) top (peek stack)]
+      (if (and (seq stack) (pair-alphabet? top p))
+        (recur (pop stack) (next polymer))
+        (recur (conj stack p) (next polymer))))))
 
 (defn solve
   [input-string]
-  (count (react input-string)))
+  (->> (vec input-string)
+       (react_polymer [])
+       count))
 
 (comment
   ;11754
