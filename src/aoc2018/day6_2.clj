@@ -28,21 +28,34 @@
 ; for문을 map -> reduce 단계 별로 구분이 필요하다.
 ; 단계별로 나뉘어져야한다.
 ;
-(defn calculate-area2
-  "맨하탄 거리의 합을 반환한다."
-  [xys [x1 x2 y1 y2]]
-  (for [y (range y1 (inc y2))
-        x (range x1 (inc x2))]
-    (reduce + (for [xy xys] (manhattan-distance xy [x y])))))
 
-; 스탭이 들어나 있지 않음.
-; 함수명에 의미를 반환하는 명확한 명칭으로 수정 필요 calculate-area2 -> ex) safe-area
-(defn solve2 [xys]
-  (->> (area-limits xys)
-       (calculate-area2 xys)
-       (filter #(< % 10000))
+(defn total-manhattan-dist
+  [init-points point]
+  (reduce + (map (fn [init-point]
+                   (manhattan-distance init-point point))
+                 init-points)))
+
+(defn sum-coordinates
+  [init-points [limit-x1 limit-x2 limit-y1 limit-y2]]
+  (let [all-points (for [y (range limit-y1 (inc limit-y2))
+                         x (range limit-x1 (inc limit-x2))]
+                     [x y])]
+
+    (map #((partial total-manhattan-dist init-points) %) all-points)))
+
+(defn safe-area
+  [safe-limit sum-of-coordinates]
+  (->> sum-of-coordinates
+       (filter #(> safe-limit %))
        count))
+
+(defn solve2
+  [input safe-limit]
+  (->> (area-limits input)
+       (sum-coordinates input)
+       (safe-area safe-limit)
+       ))
 
 (comment
   ;44202
-  (solve2 (parse-data input-strings)))
+  (solve2 (parse-data input-strings) 10000))
