@@ -93,8 +93,7 @@
     (->> area
          (filter #(finite %))
          frequencies
-         (sort-by val)
-         last
+         (apply max-key val)
          last)))
 
 (comment
