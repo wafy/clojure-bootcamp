@@ -3,6 +3,13 @@
             [clojure.java.io :as io]
             [clojure.set :as set]))
 
+; 리팩토링 시 고려사
+; (->> ) 부분을 별도의 함수로 분리하여 추상화의 레밸을 맞춰야한다.
+; 문제를 풀때 어떻게 쪼개서 해결해야 하는지
+; 한글로 단계를 적어서 풀어서 함수로 분리
+; 의식적으로 하고자 해야한다.
+; solve 함수내에서 결과에 필요한 부분을 한글로 적어서 단계별로 분리해보자.
+
 (def input-file (-> "aoc2018/input6.txt" (io/resource) (slurp)))
 (def input-strings (str/split-lines input-file))
 
@@ -73,23 +80,10 @@
 (comment
   (area-limits (parse-data input-strings)))
 
-; (->> ) 부분을 별도의 함수로 분리하여 추상화의 레밸을 맞춰야한다.
-; 문제를 풀때 어떻게 쪼개서 해결해야 하는지
-; 한글로 단계를 적어서 풀어서 함수로 분리
-; 의식적으로 하고자 해야한다.
-; solve 함수내에서 결과에 필요한 부분을 한글로 적어서 단계별로 분리해보자.
-; aco2020 4번 문제를 풀고 풀기전에 노선 링크를 보자.
-  ; 1.blog를 보라
-  ; 2. 문제를 풀어라
-  ; 3. 스팩을 써라 (처음부터 스팩을 써도 된다.) 참고링크 : https://clojure.org/guides/spec , https://clojure.org/about/spec
-; sort last last 대신 min-key max-key 를 적용해서 변경이 필요하다.
-; 1 가장 큰값을 구한다
-; 2 정렬해서 가장 큰값을 구한다. (구현으로써 코드가 이해되는 의미)
 (defn solve1 [xys]
   (let [limits (area-limits xys) ;주어진 좌표에서 최소 최대 좌표를 반환한다. [44 313 44 342]
         area (calculate-area xys limits) ; 최대 영역 안에서 모든 좌표들을 반환한다.
         finite (set/difference (into #{} xys) (into #{} (infinits area limits)))] ;주어진 좌표에서 무한을 뺀것이 유한한 좌
-
     (->> area
          (filter #(finite %))
          frequencies
