@@ -30,17 +30,31 @@
         (map (fn [[a b]] [(keyword  "day4" a) b]))))
 
 (comment
-  str->pairs (first input))
+  (str->pairs (first input))
 
+  ;comp를 사용하여 두함수를 합성해서 map을 한번만 사용해보도록 하자.
 (defn map-passport
   [input]
   (->> input
-      (map str->pairs)
-      (map #( into {} %)) ; {키워드: "value"} 의 맵으로 변환한다.
-      (map #(dissoc % :day4/cid)))) ;cid는 제외한 맵을 새롭게 반환한다.
+       (map str->pairs)
+       (map #(into {} %))                                 ; {키워드: "value"} 의 맵으로 변환한다.
+       (map #(dissoc % :day4/cid)))))                     ;cid는 제외한 맵을 새롭게 반환한다.
+
+;(defn f1
+;  [a]
+;  (+ a 2))
+;
+;(defn f2
+;  [b]
+;  (+ b 3))
+;
+;(def f1f1  (comp f2 f1))
+;(f1f1 10)
+
 
 (comment
   (map-passport input))
+
 
 (def field-string ["byr" "iyr" "eyr" "hcl" "hgt" "ecl" "pid"])
 (def fields (set (map #(keyword "day4" %) field-string)))
