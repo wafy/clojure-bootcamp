@@ -23,43 +23,43 @@
                slurp
                (str/split #"\n\n"))) ; 각 여권별 구분은 개행 두개로 구분했기 때문에
 
-
 (defn str->pairs
   [item]
   (->> (str/split item #"[ \n]")
         (map #(str/split % #":"))  ; :으로 key:value 로 나눈다
-        (map (fn [[a b]] [(keyword  "day4" a) b])) ; :cid "value" 형태로 변환한다.
-        ))
+        (map (fn [[a b]] [(keyword  "day4" a) b]))))
 
 (comment
   str->pairs (first input))
 
-(def data-map (->>
-                (map str->pairs input)
-                (map #( into {} %)) ; {키워드: "value"} 의 맵으로 변환한다.
-                (map #(dissoc % :day4/cid)) ;cid는 제외한 맵을 새롭게 반환한다.
-                ))
-(comment
-  "0번째 백터에 접근"
-  (nth data-map 0))
+(defn data-map
+  [input]
+  (->> input
+      (map str->pairs)
+      (map #( into {} %)) ; {키워드: "value"} 의 맵으로 변환한다.
+      (map #(dissoc % :day4/cid)))) ;cid는 제외한 맵을 새롭게 반환한다.
 
-(def field-string ["byr" "iyr" "eyr" "hgt" "hcl" "ecl" "pid"])
+(comment
+  (data-map input))
+
+(def field-string ["byr" "iyr" "eyr" "hcl" "hgt" "ecl" "pid"])
 (def fields (set (map #(keyword "day4" %) field-string)))
 
 (comment
   "#{:day4/eyr :day4/byr :day4/iyr :day4/hcl :day4/ecl :day4/hgt :day4/pid}
   의 형식으로 key만 갖고 있는 맵형태"
-  fields)
+  fields input)
 
 (defn solve1
   [input]
   (->> input
+       data-map
        (filter #(= (set (keys %)) fields))
        count))
 
 (comment
   ;196
-  (solve1 data-map))
+  (solve1 input))
 
 
 
