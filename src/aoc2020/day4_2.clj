@@ -1,6 +1,7 @@
 (ns aoc2020.day4-2
   (:require [clojure.spec.alpha :as s]
-            [aoc2020.day4-1 :refer :all]))
+            [clojure.string :as str]
+            [clojure.java.io :as io]))
 
 ;각필드에 대한 아래 사항에 따라 유효성 검증을 해야한다.
 ;byr (Birth Year) - four digits; at least 1920 and at most 2002.   --> 1920 >= byr <= 2002
@@ -17,6 +18,20 @@
 ;byr iyr eyr hgt hcl ecl pid
 ; 위 7가지 유효성을 검증해서 valid한 여권의 갯수를 구하시오
 
+(def input-file (-> "aoc2020/input4.txt" io/resource slurp))
+(def input-string (str/split input-file #"\n\n+"))
+
+(defn string->passport-map [string]
+  (->> string
+       (re-seq #"(byr|iyr|eyr|hgt|hcl|ecl|pid|cid):([a-zA-Z0-9#]+)")
+       (reduce (fn [m [_ k v]]
+                 (assoc  m
+                   (keyword k)
+                   (cond
+                     (#{"iyr" "byr" "eyr" "cid"} k) (Integer/parseInt v)
+                     :else v)))
+               {})))
+
 (defn hgt-test
   "cm 일 경우 150 >= hgt <= 193
    in 일 경우  59 >= hgt <= 76
@@ -27,44 +42,43 @@
     (cond (= unit "cm") (and (>= num 150) (<= num 193))
           (= unit "in") (and (>= num 59) (<= num 76)))))
 
-(s/def ::byr (s/and string? #(>= (Integer/parseInt %) 1920) #(<= (Integer/parseInt %) 2002)))
-(s/def ::iyr (s/and string? #(>= (Integer/parseInt %) 2010) #(<= (Integer/parseInt %) 2020)))
-(s/def ::eyr (s/and string? #(>= (Integer/parseInt %) 2020) #(<= (Integer/parseInt %) 2030)))
-(s/def ::hgt (s/and string? hgt-test))
-(s/def ::hcl (s/and string? #(re-find #"^#[0-9a-f]{6}" %)))
-(s/def ::ecl (s/and string? #(re-find #{"amb" "blu" "brn" "gry" "grn" "hzl" "oth"} %)))
-(s/def ::pid (s/and string? #(re-find #"^\d{9}$" %)))
-(s/def ::cid string?)
+(s/def :passport/byr (s/int-in 1920 2003))
+(s/def :passport/iyr (s/int-in 2010 2021))
+(s/def :passport/eyr (s/int-in 2020 2031))
+(s/def :passport/hgt (s/and hgt-test))
+(s/def :passport/hcl (s/and #(re-find #"^#[0-9a-f]{6}" %)))
+(s/def :passport/ecl (s/and #{"amb" "blu" "brn" "gry" "grn" "hzl" "oth"}))
+(s/def :passport/pid (s/and #(re-find #"^\d{9}$" %)))
+(s/def :passport/cid (constantly true))
 
-(comment
-  "byr 2000년이 포함된다면 true"
-  (s/valid? ::byr "2000")
-  "hgt 193cm true"
-  (s/valid? ::hgt "193cm")
-  "hgt 50in true"
-  (s/valid? ::hgt "60in")
-  "hcl #341e13 true"
-  (s/valid? ::hcl "#6b5442")
-  "ecl hzl true"
-  (s/valid? ::ecl "hzl")
-  "pid 637485594 true"
-  (s/valid? ::pid "637485594"))
 
+ (comment
+   "byr 2000년이 포함된다면 true"
+   (s/valid? :passport/byr 1975)
+   "hgt 193cm true"
+   (s/valid? :passport/hgt "193cm")
+   "hgt 50in true"
+   (s/valid? :passport/hgt "60in")
+   "hcl #341e13 true"
+   (s/valid? :passport/hcl "#6b5442")
+   "ecl hzl true"
+   (s/valid? :passport/ecl "hzl")
+   "pid 637485594 true"
+   (s/valid? :passport/pid "637485594"))
 
 (s/def ::passport (s/keys
-                    :req [::byr ::iyr ::eyr ::hgt ::hcl ::ecl ::pid]
-                    :opt [::cid]))
+                    :req-un [:passport/byr :passport/iyr :passport/hgt :passport/hcl
+                             :passport/ecl :passport/eyr :passport/pid]
+                    :opt-un [:passport/cid]))
+
+
+(defn solve2
+  [input]
+  (->> input
+       (map string->passport-map)
+        (filter #(s/valid? ::passport %))
+        count))
 
 (comment
-  (s/valid? ::passport (nth (map-passport input) 0))
-
-  (defn solve2
-    [input]
-    (->> input
-         map-passport
-         (filter #(s/valid? ::passport %))
-         count)))
-
-(comment
-  ;
-  (solve2 input))
+  ;114
+  (solve2 input-string))
