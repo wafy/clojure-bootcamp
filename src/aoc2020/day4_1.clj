@@ -32,7 +32,7 @@
 (comment
   str->pairs (first input))
 
-(defn data-map
+(defn map-passport
   [input]
   (->> input
       (map str->pairs)
@@ -40,7 +40,7 @@
       (map #(dissoc % :day4/cid)))) ;cid는 제외한 맵을 새롭게 반환한다.
 
 (comment
-  (data-map input))
+  (map-passport input))
 
 (def field-string ["byr" "iyr" "eyr" "hcl" "hgt" "ecl" "pid"])
 (def fields (set (map #(keyword "day4" %) field-string)))
@@ -53,7 +53,7 @@
 (defn solve1
   [input]
   (->> input
-       data-map
+       map-passport
        (filter #(= (set (keys %)) fields))
        count))
 
