@@ -88,24 +88,12 @@
          execute-set-list #{}
          execute-log []]
     (let [
-          ; index에 해당하는 실행할 명령을 가져온다.
           execute-command (nth operation-list program-count)
-
           {id :id op :op number :number} execute-command
-          ; op 에 해당하는 처리할 함수를 가져온다.
           execute-function (get operation-functions op)
-
           {result-jump :jump renewal-accumulator :accumulator} (execute-function number accumulator)
-          ;
           renewal-program-count (+ program-count result-jump)
           renewal-execute-log (conj execute-log execute-command)]
-      (prn "--------------------------------")
-      (prn "program-count: " program-count)
-      (prn "result-jump: " result-jump)
-      (prn "renewal-accumulator: " renewal-accumulator)
-      (prn "execute-set-list: " execute-set-list)
-      (prn "renewal-program-count: " renewal-program-count)
-      (prn "renewal-accumulator: " renewal-accumulator)
 
       (cond
         (>= renewal-program-count (count operation-list))
