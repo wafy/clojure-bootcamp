@@ -59,48 +59,40 @@
   "A {:out #{\"B\" \"D\" \"G\" \"I\"}, :in #{\"C\" \"P\"}},"
   (steps sample-input-file))
 
-(defn 후보-노드 [graph]
-  "출발 경로를 반환하는 함수 "
+(defn candidate-node [graph]
   (->> graph
        (filter (fn [[_ v]] (-> v :in empty?)))
        (into (sorted-map))))
 
 (comment
   " {\"C\" {:out #{\"A\" \"F\"}}}"
-  (후보-노드 (steps sample-input-file)))
+  (candidate-node (steps sample-input-file)))
 
-
-(defn traverse1
+(defn traverse
   "
  graph : 전체 경로가 담긴 맵
  진행해야할_경로정보: 이번턴에 처리해야할 경로
  찾은_경로: 순서가 판명된 경로 리스트
  "
-  ([graph] (traverse1 graph (후보-노드 graph) []))              ; 처음 호출될때는 파라미터가 1개 joyof p42(destructuring)
-  ([graph 진행해야할_경로정보 찾은_경로]                               ; 두번째부터 호출될때 파리머터는 3개
-   (prn "-------------------------------------")
-   (prn "진행해야할_경로정보: " 진행해야할_경로정보)
-   (prn  "찾은_경로: " 찾은_경로)
-   (if (empty? 진행해야할_경로정보)                                ; 처리해야할 경로가 없다면 route 반환
-     찾은_경로
-     (let [진행할_대상 (-> 진행해야할_경로정보 first key)            ; work-context 첫번째값은 이번턴에서 수행해야할 값
-           찾은-목록 (conj (into #{} 찾은_경로) 진행할_대상)
-           다음_진행할_목록  (mapcat (comp :out val) 진행해야할_경로정보)        ;{"C" {:out #{"A" "F"}}} 에서 out을 추출
-           다음_진행할_정보 (->> 다음_진행할_목록
-                          (filter (fn [k]
-                                (empty? (set/difference (get-in graph [k :in]) 찾은-목록)) ;전체목록과 후보목록을 뺀 나머지
-                                ))
-                          (select-keys graph)
-                          (into (sorted-map)))]
+  ([graph] (traverse graph (candidate-node graph) []))
+  ([graph proceed-node discovered-node]
+   (if (empty? proceed-node)
+     discovered-node
+     (let [target-node (-> proceed-node first key)
+           find-node-list (conj (into #{} discovered-node) target-node)
+           candidate-node (mapcat (comp :out val) proceed-node)
+           candidate-node-list (->> candidate-node
+                                    (filter (fn [k] (empty? (set/difference (get-in graph [k :in]) find-node-list))))
+                                    (select-keys graph)
+                                    (into (sorted-map)))]
 
-       (prn "후보목록:" 찾은-목록)
-       (prn "다음_진행할_정보" 다음_진행할_정보)
        (recur graph
-              (-> (merge 진행해야할_경로정보 다음_진행할_정보) (dissoc 진행할_대상))
-              (conj 찾은_경로 진행할_대상))))))                   ;
+              (-> (merge proceed-node candidate-node-list) (dissoc target-node))
+              (conj discovered-node target-node))))))
 
 (defn solve1 [input-string]
-  (apply str (traverse1 (steps input-string))))
+
+  (apply str (traverse (steps input-string))))
 
 (comment
   ;CABDFE
