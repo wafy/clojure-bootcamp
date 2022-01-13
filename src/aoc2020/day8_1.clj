@@ -25,7 +25,6 @@
  acc에는 값이 누적됨
  =+ 1 3 1 = 5가 정답
 
- 'iterate로 변경
 ")
 
 (defn file->string [file-address]
@@ -35,6 +34,7 @@
 
 (def input-strings (file->string "aoc2020/input8.txt"))
 (def sample-input-strings (file->string "aoc2020/sample-input8.txt"))
+
 
 (def operation-functions
   "각 어셈블리 명령을 처리하는 함수를 정의합니다."
@@ -56,7 +56,7 @@
   "주어진 문자열을 코드 리스트로 변환해 리턴합니다."
   [strings]
   (->> strings
-       ;         op     arg-number
+       ;         op     number
        (re-seq #"(\S+) +([\+\-]\d+)")
        (map-indexed (fn [index [_ operation arg-number]]
                       (let [op (keyword operation)
@@ -65,55 +65,65 @@
                          :op         op
                          :number number})))))
 
-(comment
-  " 샘플데이타는 다음과 같이 반환된다.
-({:id 0, :op :nop, :number 0}
- {:id 1, :op :acc, :number 1}
- {:id 2, :op :jmp, :number 4}
- {:id 3, :op :acc, :number 3}
- {:id 4, :op :jmp, :number -3}
- {:id 5, :op :acc, :number -99}
- {:id 6, :op :acc, :number 1}
- {:id 7, :op :jmp, :number -4}
- {:id 8, :op :acc, :number 6})
-  ")
 (strings->codes sample-input-strings)
 
+(defn execute-code
+  [context]
+  (let [{:keys [operations
+                accumulator
+                pointer
+                executed
+                execute-log]} context
+
+        execute-command (nth operations pointer)
+
+        {id     :id
+         op     :op
+         number :number} execute-command
+
+        execute-function (get operation-functions op)
+
+        {result-jump         :jump
+         renewal-accumulator :accumulator} (execute-function number accumulator)
+
+        renewal-program-count (+ pointer result-jump)]
+    {
+     :operations  operations
+     :executed    (conj executed id)
+     :execute-log (conj execute-log execute-command)
+     :accumulator renewal-accumulator
+     :pointer     renewal-program-count}))
+
+
+(defn error?
+  [{next-pointer :pointer
+    operations   :operations
+    executed     :executed}]
+  (cond
+    (>= next-pointer (count operations))
+    (prn "finish")
+    (contains? executed (:id (nth operations next-pointer)))
+    (prn "error")
+
+    :else
+    true))
+
 (defn solve1
-  [input]
-  (loop [
-         operation-list input
-         accumulator 0
-         program-count 0
-         execute-set-list #{}
-         execute-log []]
-    (let [
-          execute-command (nth operation-list program-count)
-          {id :id op :op number :number} execute-command
-          execute-function (get operation-functions op)
-          {result-jump :jump renewal-accumulator :accumulator} (execute-function number accumulator)
-          renewal-program-count (+ program-count result-jump)
-          renewal-execute-log (conj execute-log execute-command)]
+  [input-string]
+  (let [context {
+                 :operations  (strings->codes input-string)
+                 :accumulator 0
+                 :pointer     0
+                 :executed    #{}
+                 :execute-log []}]
+    (last 
+      (take-while error?
+                  (iterate execute-code context)))))
 
-      (cond
-        (>= renewal-program-count (count operation-list))
-        {:result         :finish
-         :accumulator    renewal-accumulator}
-
-        (contains? execute-set-list id)
-        {:result         :error
-         :accumulator    accumulator}
-
-        :else
-        (recur operation-list
-               renewal-accumulator
-               renewal-program-count
-               (conj execute-set-list id)
-               renewal-execute-log)))))
-reduce
 (comment
-  ; 5
-  (solve1 (strings->codes sample-input-strings))
+  ;
   ;1217
-  (solve1 (strings->codes input-strings)))
+  (solve1 input-strings))
+
+
 
